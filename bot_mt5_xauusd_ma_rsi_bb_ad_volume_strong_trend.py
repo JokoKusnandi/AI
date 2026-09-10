@@ -6,11 +6,11 @@ from datetime import datetime
 
 # ================= KONFIGURASI =================
 SYMBOLS = [
-    # "XAUUSD.vx",
+    "XAUUSD.vx",
     "BTCUSD.vx"
 ]
 
-CHECK_INTERVAL_SECONDS = 15
+CHECK_INTERVAL_SECONDS = 30
 
 ENTRY_SCORE_THRESHOLD = 70
 MAX_DAILY_LOSS = 5.0
@@ -27,13 +27,13 @@ DEFAULT_SETTINGS = {
 SYMBOL_SETTINGS = {
     "XAUUSD.vx": {
         "lot": 0.01,
-        "max_spread_points": 20,
+        "max_spread_points": 30,
         "sl_distance": 3.0,
     },
     "BTCUSD.vx": {
         "lot": 0.01,
         "max_spread_points": 100,
-        "sl_distance": 3.0,  # Untuk BTC biasanya perlu lebih besar, misalnya 50/100/200
+        "sl_distance": 300 # Untuk BTC biasanya perlu lebih besar, misalnya 50/100/200
     },
 }
 
@@ -222,6 +222,7 @@ def check_h1_trend_alignment(df_h1):
     Cek alignment MA di H1.
     """
     if df_h1 is None or df_h1.empty:
+        print("[H1 TREND] ⚠️  Data kosong → RANGING (No Signal)")
         return "RANGING"
 
     last = df_h1.iloc[-1]
@@ -229,14 +230,36 @@ def check_h1_trend_alignment(df_h1):
     required = ['ma20', 'ma50', 'ma100', 'ma200']
     for col in required:
         if col not in last or pd.isna(last[col]):
+            print(f"[H1 TREND] ⚠️  Kolom '{col}' tidak tersedia → RANGING (No Signal)")
             return "RANGING"
+    # Ambil nilai MA untuk ditampilkan
+    ma20  = last['ma20']
+    ma50  = last['ma50']
+    ma100 = last['ma100']
+    ma200 = last['ma200']
 
-    if last['ma20'] > last['ma50'] > last['ma100'] > last['ma200']:
+    print("=" * 50)
+    print("[H1 TREND] Nilai Moving Average:")
+    print(f"   MA20  = {ma20:.3f}")
+    print(f"   MA50  = {ma50:.3f}")
+    print(f"   MA100 = {ma100:.3f}")
+    print(f"   MA200 = {ma200:.3f}")
+    print("-" * 50)
+
+    if ma20 > ma50 > ma100 > ma200:
+        print("🟢 [H1 TREND] BULLISH → ✅ SINYAL BUY")
+        print("=" * 50)
         return "BULLISH"
-    elif last['ma20'] < last['ma50'] < last['ma100'] < last['ma200']:
+
+    elif ma20 < ma50 < ma100 < ma200:
+        print("🔴 [H1 TREND] BEARISH → 🔻 SINYAL SELL")
+        print("=" * 50)
         return "BEARISH"
 
-    return "RANGING"
+    else:
+        print("🟡 [H1 TREND] RANGING → ⏸️  NO SIGNAL")
+        print("=" * 50)
+        return "RANGING"
 
 
 # ================= SCORING ENTRY =================
@@ -264,8 +287,23 @@ def calculate_entry_score(df_m15, df_h1, direction):
     if in_ma_zone or touch_bb:
         score += 30
 
-    # 2. MOMENTUM RSI (Max 25)
-    rsi_ok = (40 <= last['rsi'] <= 50) if direction == "BUY" else (50 <= last['rsi'] <= 60)
+        # 2. MOMENTUM RSI (Period 25)
+    rsi_val = last['rsi']
+    
+    # Gunakan < dan > agar tidak ada overlap di angka 50
+    # Contoh logika RSI Hook untuk BUY
+    prev_rsi = df_h1.iloc[-2]['rsi']
+    if direction == "BUY":
+        # RSI sebelumnya di bawah 45, dan RSI sekarang mulai naik (hook)
+        rsi_ok = (prev_rsi < 45) and (40 <= rsi_val < 55) and (rsi_val > prev_rsi)
+        rsi_zone = "40 - 50 (Pullback Uptrend)"
+    else: # SELL
+        rsi_ok = (50 < rsi_val <= 60)
+        rsi_zone = "50 - 60 (Pullback Downtrend)"
+
+    # Print untuk monitoring
+    status_rsi = "✅ OK" if rsi_ok else "❌ WAIT"
+    print(f"[RSI {25}] Nilai: {rsi_val:.2f} | Target Zone: {rsi_zone} | Status: {status_rsi}")
 
     div_bullish = (
         last['close'] < df_m15['close'].iloc[-10:].min() and
@@ -381,7 +419,7 @@ def execute_trade(symbol, direction, entry_price, sl, tp):
         print("[ERROR] account_info gagal.")
         return False
 
-    if account.margin_free < margin_req + 15:
+    if account.margin_free < margin_req + 7:
         print(f"[SKIP] {symbol}: free margin kurang. Free margin=${account.margin_free:.2f}, margin_req=${margin_req:.2f}")
         return False
 
@@ -480,11 +518,11 @@ def process_symbol(symbol):
     sl_distance = get_setting(symbol, "sl_distance")
 
     if signal_dir == "BUY":
-        sl = entry - sl_distance
-        tp = entry + (sl_distance * 1.5)
+        sl = entry - sl_distance*9
+        tp = entry + (sl_distance * 15)
     else:
-        sl = entry + sl_distance
-        tp = entry - (sl_distance * 1.5)
+        sl = entry + sl_distance*9
+        tp = entry - (sl_distance * 15)
 
     success = execute_trade(symbol, signal_dir, entry, sl, tp)
 

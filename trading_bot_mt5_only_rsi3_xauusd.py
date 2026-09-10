@@ -16,7 +16,7 @@ MAGIC_NUMBER = 654321
 # SL 15 points = 0.15 atau 1.5 pips. TP 1 point = 0.01 atau 0.1 pips.
 # Jika broker menolak (Error 10016), itu karena Stops Level broker lebih besar dari nilai ini.
 SL_POINTS = 15
-TP_POINTS = 1
+TP_POINTS = 15
 MAX_RISK_PERCENT = 30
 
 # Semua timeframe sesuai permintaan
@@ -423,9 +423,9 @@ def get_htf_bias():
     if not values:
         return 'NEUTRAL'
     avg = sum(values) / len(values)
-    if avg < 45:
+    if avg < 30:
         return 'BUY'
-    elif avg > 55:
+    elif avg > 70:
         return 'SELL'
     return 'NEUTRAL'
 
@@ -464,12 +464,12 @@ def check_signals():
     allow_buy_scaling = h1_rsi < 30
     
     # =================== SINYAL BUY ===================
-    if m15_rsi < RSI_OVERSOLD and m5_rsi < 45:
+    if m15_rsi < RSI_OVERSOLD and m5_rsi < 35
         if htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
             return mt5.ORDER_TYPE_BUY, "BUY_OVERSOLD"
     
     if is_rsi_flat(m15_hist, RSI_FLAT_30_ZONE, RSI_FLAT_TOLERANCE, RSI_FLAT_THRESHOLD):
-         if m5_rsi < 45 and htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
+         if m5_rsi <35 and htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
             return mt5.ORDER_TYPE_BUY, "BUY_FLAT_30"
     
     # =================== SINYAL SELL ===================

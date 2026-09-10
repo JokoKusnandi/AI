@@ -1,0 +1,38 @@
+# --- ANCHOR: Wajib dipasang pertama agar TensorFlow tidak crash ---
+numpy==1.26.4
+
+# --- Core Data & Utilities ---
+pandas==2.2.2
+scipy==1.14.1
+python-dotenv==1.0.1
+requests==2.32.3
+schedule==1.2.2
+aiohttp==3.10.5
+loguru==0.7.2
+sqlalchemy==2.0.32
+joblib==1.4.2
+
+# --- Trading & Technical Analysis ---
+MetaTrader5
+ta==0.11.0
+
+# --- Visualization & Image ---
+matplotlib==3.9.2
+opencv-python==4.10.0.84
+pillow==10.4.0
+
+# --- Machine Learning (Classic) ---
+scikit-learn==1.5.1
+xgboost==2.1.1
+lightgbm==4.5.0
+
+# --- Deep Learning (Stabil untuk Python 3.12 Windows CPU) ---
+tensorflow==2.17.0
+torch==2.4.0+cpu
+torchvision==0.19.0+cpu
+transformers==4.44.2
+protobuf==4.25.4
+h5py==3.11.0
+
+# --- Testing ---
+pytest==8.3.2

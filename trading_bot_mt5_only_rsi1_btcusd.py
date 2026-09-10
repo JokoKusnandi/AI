@@ -278,10 +278,10 @@ def calculate_sl_tp(entry, order_type, points=150):
 
     # Hitung Harga SL dan TP (Risk:Reward 2:1.5)
     if order_type == mt5.ORDER_TYPE_BUY:
-        sl = entry - (dist*2)
+        sl = entry - (dist*3)
         tp = entry + (dist * 0.7)  
     else: # SELL
-        sl = entry + (dist*2)
+        sl = entry + (dist*3)
         tp = entry - (dist * 0.7)
         
     # Normalisasi ketat ke desimal broker (Wajib untuk menghindari 10016)
@@ -477,9 +477,9 @@ def get_htf_bias():
     if not values:
         return 'NEUTRAL'
     avg = sum(values) / len(values)
-    if avg < 45:
+    if avg < 35:
         return 'BUY'
-    elif avg > 55:
+    elif avg > 65:
         return 'SELL'
     return 'NEUTRAL'
 
@@ -529,20 +529,20 @@ def check_signals():
     # =================== SINYAL BUY ===================
     
     # 1. BUY OVERSOLD: M15 RSI < 40, M5 konfirmasi < 45, HTF tidak SELL
-    if m15_rsi < RSI_OVERSOLD and m5_rsi < 45:
+    if m15_rsi < RSI_OVERSOLD and m5_rsi < 35:
         # Izinkan jika belum ada posisi BUY, ATAU jika H1 RSI < 30 (scaling in)
         if htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
             return mt5.ORDER_TYPE_BUY, "BUY_OVERSOLD"
     
     # 2. BUY FLAT 30: M15 flat di 30, M5 konfirmasi < 45, HTF tidak SELL
     if is_rsi_flat(m15_hist, RSI_FLAT_30_ZONE, RSI_FLAT_TOLERANCE, RSI_FLAT_THRESHOLD):
-         if m5_rsi < 45 and htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
+         if m5_rsi < 35 and htf_bias != 'SELL' and (allow_buy_scaling or not has_open_position(mt5.ORDER_TYPE_BUY)):
             return mt5.ORDER_TYPE_BUY, "BUY_FLAT_30"
     
     # =================== SINYAL SELL ===================
     
     # 3. SELL OVERBOUGHT: M15 RSI > 60, M5 konfirmasi > 55, HTF tidak BUY
-    if m15_rsi > RSI_OVERBOUGHT and m5_rsi > 55:
+    if m15_rsi > RSI_OVERBOUGHT and m5_rsi > 65:
         # Izinkan jika belum ada posisi SELL, ATAU jika H1 RSI > 70 (scaling in)
         if htf_bias != 'BUY' and (allow_sell_scaling or not has_open_position(mt5.ORDER_TYPE_SELL)):
             return mt5.ORDER_TYPE_SELL, "SELL_OVERBOUGHT"
@@ -550,7 +550,7 @@ def check_signals():
     
     # 4. SELL FLAT 70: M15 flat di 70, M5 konfirmasi > 55, HTF tidak BUY
     if is_rsi_flat(m15_hist, RSI_FLAT_70_ZONE, RSI_FLAT_TOLERANCE, RSI_FLAT_THRESHOLD):
-        if m5_rsi > 55 and htf_bias != 'BUY' and (allow_sell_scaling or not has_open_position(mt5.ORDER_TYPE_SELL)):
+        if m5_rsi > 65 and htf_bias != 'BUY' and (allow_sell_scaling or not has_open_position(mt5.ORDER_TYPE_SELL)):
             return mt5.ORDER_TYPE_SELL, "SELL_FLAT_70"
     
     return None, None
